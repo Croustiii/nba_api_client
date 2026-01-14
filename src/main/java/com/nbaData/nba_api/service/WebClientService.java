@@ -1,4 +1,4 @@
-package com.nbaData.nba_api.controller;
+package com.nbaData.nba_api.service;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -6,28 +6,33 @@ import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-@RestController
-@RequestMapping("/api/nba")
-public class TestController {
-    private static final Logger logger = LoggerFactory.getLogger(TestController.class);
-    private final WebClient webClient;
+@Service
+public class WebClientService {
+    private static final Logger logger = LoggerFactory.getLogger(WebClientService.class);
 
-    public TestController(WebClient.Builder webClientBuilder) {
+    private WebClient webClient = null;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public WebClientService(WebClient.Builder webClientBuilder) {
+
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                 .responseTimeout(Duration.ofSeconds(10))
@@ -37,7 +42,11 @@ public class TestController {
                         .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS)));
 
         ExchangeStrategies strategies = ExchangeStrategies.builder()
-                .codecs(configurer -> configurer.defaultCodecs().enableLoggingRequestDetails(true))
+                .codecs(configurer -> {
+                    configurer.defaultCodecs().enableLoggingRequestDetails(true);
+                    // Augmente la limite de buffer si nécessaire (par défaut 256KB)
+                    configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024); // 16MB
+                })
                 .build();
 
         this.webClient = webClientBuilder
@@ -61,25 +70,34 @@ public class TestController {
                 .build();
     }
 
-
-    @GetMapping("/player-career-stats")
-    public Mono<ResponseEntity<String>> getPlayerCareerStats(
-            @RequestParam(defaultValue = "2544") String playerId,
-            @RequestParam(defaultValue = "Totals") String perMode) {
-
-        logger.info("Appel API NBA pour le joueur {} avec mode {}", playerId, perMode);
+    public Mono<ResponseEntity<String>> performGetCall(Map<String, String> params, String endPoint){
+        // Convertit Map<String,String> en MultiValueMap<String,String>
+        MultiValueMap<String, String> multiParams = new LinkedMultiValueMap<>();
+        if (params != null) {
+            params.forEach(multiParams::add);
+        }
 
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/stats/playercareerstats")
-                        .queryParam("PerMode", perMode)
-                        .queryParam("PlayerID", playerId)
+                        .path(endPoint)
+                        .queryParams(multiParams)
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)
-                .map(body -> {
-                    logger.info("Réponse reçue avec succès");
-                    return ResponseEntity.ok(body);
+                .flatMap(body -> {
+                    try {
+                        JsonNode json = objectMapper.readTree(body);
+                        String pretty = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+                        return Mono.just(ResponseEntity
+                                .ok()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(pretty));
+                    } catch (Exception e) {
+                        logger.error("Erreur parsing JSON", e);
+                        return Mono.just(ResponseEntity
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("Erreur parse JSON: " + e.getMessage()));
+                    }
                 })
                 .onErrorResume(WebClientResponseException.class, ex -> {
                     logger.error("Erreur WebClient - Status: {}, Body: {}",
@@ -94,5 +112,6 @@ public class TestController {
                             .status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body("Erreur serveur: " + ex.getMessage()));
                 });
+
     }
 }

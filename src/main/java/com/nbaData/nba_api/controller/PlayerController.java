@@ -1,20 +1,22 @@
 package com.nbaData.nba_api.controller;
 
 import com.nbaData.nba_api.service.NbaStatsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-
-import java.net.URI;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/player")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/nba")
 public class PlayerController {
+    private static final Logger logger = LoggerFactory.getLogger(PlayerController.class);
 
-
-    private final NbaStatsService nbaStatsService;
+    public final NbaStatsService nbaStatsService;
 
     @Autowired
     public PlayerController(NbaStatsService nbaStatsService) {
@@ -22,26 +24,16 @@ public class PlayerController {
     }
 
 
-    @GetMapping("/{id}")
-    public ResponseEntity<String> getRoot(@PathVariable Long id) {
-        return ResponseEntity.ok("player root" + id);
-    }
-
-
-    /**
-     * Récupère les statistiques de carrière d'un joueur
-     *
-     * @param playerId ID du joueur (ex: 2544 pour LeBron James)
-     * @param perMode Mode de calcul : "Totals", "PerGame", "Per36", etc. (défaut: "Totals")
-     * @return Statistiques de carrière du joueur
-     */
-    @GetMapping("/career-stats")
-    public ResponseEntity<String> getPlayerCareerStats(
-            @RequestParam String playerId,
+    @GetMapping("/player-career-stats")
+    public Mono<ResponseEntity<String>> getPlayerCareerStats(
+            @RequestParam(defaultValue = "2544") String playerId,
             @RequestParam(defaultValue = "Totals") String perMode) {
 
-        String response = nbaStatsService.getPlayerCareerStats(playerId, perMode);
-        return ResponseEntity.ok(response);
+        logger.info("Appel API NBA pour le joueur {} avec mode {}", playerId, perMode);
+
+        return this.nbaStatsService.getCareerStats(playerId, perMode);
     }
+
+
 
 }
