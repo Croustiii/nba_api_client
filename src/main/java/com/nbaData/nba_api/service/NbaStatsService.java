@@ -54,19 +54,7 @@ public class NbaStatsService {
     }
 
     public Mono<PlayerIndexResponse> getAllPlayers(String season, String leagueId) {
-        HashMap<String, String> params = new HashMap<>();
-        params.put("College", "");
-        params.put("Country", "");
-        params.put("DraftPick", "");
-        params.put("DraftRound", "");
-        params.put("DraftYear", "");
-        params.put("Height", "");
-        params.put("Historical", "1");
-        params.put("LeagueID", leagueId);
-        params.put("Season", season);
-        params.put("SeasonType", "Regular Season");
-        params.put("TeamID", "0");
-        params.put("Weight", "");
+        HashMap<String, String> params = getStringStringHashMap(season, leagueId);
 
         return webClientService.performGetCall(params, PLAYER_INDEX_ENDPOINT_URI, PlayerIndexResponse.class)
                 .map(response -> {
@@ -91,6 +79,23 @@ public class NbaStatsService {
                     }
                     return response;
                 });
+    }
+
+    private HashMap<String, String> getStringStringHashMap(String season, String leagueId) {
+        HashMap<String, String> params = new HashMap<>();
+        params.put("College", "");
+        params.put("Country", "");
+        params.put("DraftPick", "");
+        params.put("DraftRound", "");
+        params.put("DraftYear", "");
+        params.put("Height", "");
+        params.put("Historical", "1");
+        params.put("LeagueID", leagueId);
+        params.put("Season", season);
+        params.put("SeasonType", "Regular Season");
+        params.put("TeamID", "0");
+        params.put("Weight", "");
+        return params;
     }
 
     private int findHeaderIndex(List<String> headers, String... candidates) {

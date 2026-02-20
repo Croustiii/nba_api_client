@@ -80,6 +80,20 @@ public class PlayerController {
                 });
     }
 
+    @PostMapping("/sync-career-stats")
+    public Mono<ResponseEntity<String>> syncCareerStats(
+            @RequestParam(defaultValue = "10") int limit) {
+
+        logger.info("Synchronisation des career stats pour {} joueurs", limit);
+
+        return playerSyncService.syncAllCareerStats(limit)
+                .map(count -> ResponseEntity.ok(count + " lignes de career stats synchronisées"))
+                .onErrorResume(e -> {
+                    logger.error("Erreur lors de la synchronisation des career stats", e);
+                    return Mono.just(ResponseEntity.internalServerError().body("Erreur : " + e.getMessage()));
+                });
+    }
+
     @GetMapping("/{playerId}/career-stats")
     public Mono<ResponseEntity<PlayerCareerStatsResponse>> getPlayerCareerStats(
             @PathVariable String playerId,

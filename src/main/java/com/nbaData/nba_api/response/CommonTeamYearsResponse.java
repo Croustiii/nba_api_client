@@ -1,7 +1,7 @@
 package com.nbaData.nba_api.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.nbaData.nba_api.response.pojos.Team;
+import com.nbaData.nba_api.response.pojos.TeamDTO;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -50,21 +50,21 @@ public class CommonTeamYearsResponse {
 
     }
 
-    public List<Team> getTeams() {
+    public List<TeamDTO> getTeams() {
         if (resultSets == null || resultSets.isEmpty()) {
             return List.of();
         }
 
         ResultSet teamYearsResultSet = resultSets.get(0);
-        List<Team> teams = new ArrayList<>();
+        List<TeamDTO> teams = new ArrayList<>();
 
         for (List<Object> row : teamYearsResultSet.getRowSet()) {
-            Team team = new Team();
-            team.setLeagueId((String) row.get(0));
+            TeamDTO team = new TeamDTO();
+            team.setLeagueId(String.valueOf(row.get(0)));
             team.setTeamId(((Number) row.get(1)).longValue());
-            team.setMinYear((String) row.get(2));
-            team.setMaxYear((String) row.get(3));
-            team.setAbbreviation((String) row.get(4));
+            team.setMinYear(String.valueOf(row.get(2)));
+            team.setMaxYear(String.valueOf(row.get(3)));
+            team.setAbbreviation(String.valueOf(row.get(4)));
             teams.add(team);
         }
 

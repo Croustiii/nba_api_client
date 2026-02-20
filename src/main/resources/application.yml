@@ -3,7 +3,7 @@ spring:
     name: nba_api
   mvc:
     async:
-      request-timeout: 30000
+      request-timeout: 600000
   datasource:
     url: jdbc:h2:file:./data/nba_db
     driver-class-name: org.h2.Driver
@@ -36,3 +36,4 @@ nba:
   api:
     timeout-seconds: 30
     filter-active-players: true
+    sync-delay-ms: 500

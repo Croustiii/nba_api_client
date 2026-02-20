@@ -5,8 +5,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Team {
-// Classe Team pour représenter une équipe de manière plus lisible
+public class TeamDTO {
+// Classe TeamDTO pour représenter une équipe de manière plus lisible
 
     private String leagueId;
     private Long teamId;
@@ -14,9 +14,9 @@ public class Team {
     private String maxYear;
     private String abbreviation;
 
-    public Team() {}
+    public TeamDTO() {}
 
-    public Team(String leagueId, Long teamId, String minYear, String maxYear, String abbreviation) {
+    public TeamDTO(String leagueId, Long teamId, String minYear, String maxYear, String abbreviation) {
         this.leagueId = leagueId;
         this.teamId = teamId;
         this.minYear = minYear;
@@ -26,7 +26,7 @@ public class Team {
 
     @Override
     public String toString() {
-        return "Team{" +
+        return "TeamDTO{" +
                 "teamId=" + teamId +
                 ", abbreviation='" + abbreviation + '\'' +
                 ", years=" + minYear + "-" + maxYear +
