@@ -1,6 +1,7 @@
 package com.nbaData.nba_api.service;
 
 import com.nbaData.nba_api.response.CommonTeamYearsResponse;
+import com.nbaData.nba_api.response.LeagueGameLogResponse;
 import com.nbaData.nba_api.response.PlayerCareerStatsResponse;
 import com.nbaData.nba_api.response.PlayerIndexResponse;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ public class NbaStatsService {
     private static final String COMMON_TEAM_YEARS_ENPOINT_URI = "/stats/commonteamyears";
     private static final String TEAM_DETAILS_ENPOINT_URI = "/stats/teamdetails";
     private static final String PLAYER_INDEX_ENDPOINT_URI = "/stats/playerindex";
+    private static final String LEAGUE_GAME_LOG_ENDPOINT_URI = "/stats/leaguegamelog";
 
     @Autowired
     public NbaStatsService(WebClientService webClientService,
@@ -104,6 +106,21 @@ public class NbaStatsService {
             if (idx >= 0) return idx;
         }
         return -1;
+    }
+
+    public Mono<LeagueGameLogResponse> getLeagueGameLog(String season, String leagueId) {
+        HashMap<String, String> params = new HashMap<>();
+        params.put("Counter", "0");
+        params.put("Direction", "DESC");
+        params.put("LeagueID", leagueId);
+        params.put("PlayerOrTeam", "T");
+        params.put("Season", season);
+        params.put("SeasonType", "Regular Season");
+        params.put("Sorter", "DATE");
+        params.put("DateFrom", "");
+        params.put("DateTo", "");
+
+        return webClientService.performGetCall(params, LEAGUE_GAME_LOG_ENDPOINT_URI, LeagueGameLogResponse.class);
     }
 
     public Mono<String> getTeamDetails (String teamId) {
